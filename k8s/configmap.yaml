@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: twitter-app-config
+  namespace: blogging-app
+
+data:
+  SPRING_APPLICATION_NAME: twitter-app
+  SPRING_DATASOURCE_URL: jdbc:h2:mem:twitterapp
+  SPRING_DATASOURCE_USERNAME: sa
+  SPRING_H2_CONSOLE_ENABLED: "true"
+  SPRING_THYMELEAF_CACHE: "false"

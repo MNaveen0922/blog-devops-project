@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: twitter-app-service
+  namespace: blogging-app
+
+spec:
+  selector:
+    app: twitter-app
+
+  ports:
+    - port: 80
+      targetPort: 8080
+
+  type: LoadBalancer

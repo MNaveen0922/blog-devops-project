@@ -1,0 +1,24 @@
+# Maven
+target/
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Jenkins
+jenkins_home/
+
+# Kubernetes
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
