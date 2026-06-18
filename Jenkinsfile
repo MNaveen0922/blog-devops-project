@@ -6,6 +6,12 @@ pipeline {
 
     options {
         timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    environment {
+        IMAGE_NAME = "naveen0922/twitter-app"
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -71,11 +77,45 @@ pipeline {
                 }
             }
         }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                container('kaniko') {
+                    dir('full-stack-blogging-app') {
+                        sh '''
+                        /kaniko/executor \
+                        --context=$(pwd) \
+                        --dockerfile=$(pwd)/Dockerfile \
+                        --destination=${IMAGE_NAME}:${IMAGE_TAG} \
+                        --destination=${IMAGE_NAME}:latest \
+                        --cleanup
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                container('trivy') {
+                    sh '''
+                    sleep 20
+
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    --format table \
+                    -o image-scan-report.txt \
+                    docker.io/${IMAGE_NAME}:${IMAGE_TAG} || true
+                    '''
+                }
+            }
+        }
     }
 
     post {
+
         always {
-            archiveArtifacts artifacts: 'full-stack-blogging-app/trivy-report.txt', allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/*.txt', allowEmptyArchive: true
         }
 
         success {
