@@ -11,7 +11,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "naveen0922/twitter-app"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -50,12 +50,15 @@ pipeline {
             steps {
                 container('maven') {
                     withSonarQubeEnv('sonarqube') {
+
                         dir('full-stack-blogging-app') {
+
                             sh '''
                             mvn sonar:sonar \
                             -Dsonar.projectKey=blog-app \
                             -Dsonar.projectName=blog-app
                             '''
+
                         }
                     }
                 }
@@ -65,7 +68,9 @@ pipeline {
         stage('Trivy FS Scan') {
             steps {
                 container('trivy') {
+
                     dir('full-stack-blogging-app') {
+
                         sh '''
                         trivy fs \
                         --scanners vuln \
@@ -73,6 +78,7 @@ pipeline {
                         --format table \
                         -o trivy-report.txt . || true
                         '''
+
                     }
                 }
             }
@@ -81,16 +87,16 @@ pipeline {
         stage('Build & Push Docker Image') {
             steps {
                 container('kaniko') {
-                    dir('full-stack-blogging-app') {
-                        sh '''
-                        /kaniko/executor \
-                        --context=$(pwd) \
-                        --dockerfile=$(pwd)/Dockerfile \
-                        --destination=${IMAGE_NAME}:${IMAGE_TAG} \
-                        --destination=${IMAGE_NAME}:latest \
-                        --cleanup
-                        '''
-                    }
+
+                    sh '''
+                    /kaniko/executor \
+                    --context=${WORKSPACE} \
+                    --dockerfile=${WORKSPACE}/Dockerfile \
+                    --destination=${IMAGE_NAME}:${IMAGE_TAG} \
+                    --destination=${IMAGE_NAME}:latest \
+                    --cleanup
+                    '''
+
                 }
             }
         }
@@ -98,6 +104,7 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 container('trivy') {
+
                     sh '''
                     sleep 20
 
@@ -107,23 +114,32 @@ pipeline {
                     -o image-scan-report.txt \
                     docker.io/${IMAGE_NAME}:${IMAGE_TAG} || true
                     '''
+
                 }
             }
         }
+
     }
 
     post {
 
         always {
+
             archiveArtifacts artifacts: '**/*.txt', allowEmptyArchive: true
+
         }
 
         success {
+
             echo 'Pipeline completed successfully'
+
         }
 
         failure {
+
             echo 'Pipeline failed'
+
         }
+
     }
 }
