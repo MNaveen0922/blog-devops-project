@@ -26,34 +26,6 @@ pipeline {
             steps {
                 container('maven') {
                     withSonarQubeEnv('sonarqube') {
- pipeline {
-
-    agent {
-        label 'devops-agent'
-    }
-
-    stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build') {
-            steps {
-                container('maven') {
-                    dir('full-stack-blogging-app') {
-                        sh 'mvn clean package -DskipTests'
-                    }
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                container('maven') {
-                    withSonarQubeEnv('sonarqube') {
                         dir('full-stack-blogging-app') {
                             sh '''
                             mvn clean verify sonar:sonar \
@@ -85,4 +57,5 @@ pipeline {
             archiveArtifacts artifacts: 'full-stack-blogging-app/trivy-report.txt', allowEmptyArchive: true
         }
     }
+
 }
