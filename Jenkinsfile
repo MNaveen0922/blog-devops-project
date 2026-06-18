@@ -110,6 +110,43 @@ pipeline {
             }
         }
 
+        stage('Update Deployment Manifest') {
+            steps {
+
+                sh '''
+                sed -i "s|image:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml
+
+                echo "Updated deployment.yaml:"
+                grep image k8s/deployment.yaml
+                '''
+            }
+        }
+
+        stage('Push Deployment Manifest to GitHub') {
+            steps {
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'github-creds',
+                        usernameVariable: 'GIT_USER',
+                        passwordVariable: 'GIT_PASS'
+                    )
+                ]) {
+
+                    sh '''
+                    git config --global user.email "mnaveen0922@gmail.com"
+                    git config --global user.name "MNaveen0922"
+
+                    git add k8s/deployment.yaml
+
+                    git commit -m "Updated image to ${IMAGE_TAG}" || true
+
+                    git push https://${GIT_USER}:${GIT_PASS}@github.com/MNaveen0922/blog-devops-project.git HEAD:main
+                    '''
+                }
+            }
+        }
+
     }
 
     post {
@@ -122,18 +159,18 @@ pipeline {
 
         success {
 
-            echo '====================================='
+            echo '======================================'
             echo 'Pipeline completed successfully'
             echo "Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}"
-            echo '====================================='
+            echo '======================================'
 
         }
 
         failure {
 
-            echo '====================================='
+            echo '======================================'
             echo 'Pipeline failed'
-            echo '====================================='
+            echo '======================================'
 
         }
     }
