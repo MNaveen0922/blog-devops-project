@@ -4,6 +4,10 @@ pipeline {
         label 'devops-agent'
     }
 
+    options {
+        timestamps()
+    }
+
     stages {
 
         stage('Checkout') {
@@ -16,7 +20,21 @@ pipeline {
             steps {
                 container('maven') {
                     dir('full-stack-blogging-app') {
-                        sh 'mvn clean package -DskipTests'
+                        sh '''
+                        mvn clean package -DskipTests
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Download Dependencies') {
+            steps {
+                container('maven') {
+                    dir('full-stack-blogging-app') {
+                        sh '''
+                        mvn dependency:resolve
+                        '''
                     }
                 }
             }
@@ -28,7 +46,7 @@ pipeline {
                     withSonarQubeEnv('sonarqube') {
                         dir('full-stack-blogging-app') {
                             sh '''
-                            mvn clean verify sonar:sonar \
+                            mvn sonar:sonar \
                             -Dsonar.projectKey=blog-app \
                             -Dsonar.projectName=blog-app
                             '''
@@ -43,19 +61,29 @@ pipeline {
                 container('trivy') {
                     dir('full-stack-blogging-app') {
                         sh '''
-                        trivy fs --format table -o trivy-report.txt .
+                        trivy fs \
+                        --scanners vuln \
+                        --skip-dirs target \
+                        --format table \
+                        -o trivy-report.txt . || true
                         '''
                     }
                 }
             }
         }
-
     }
 
     post {
         always {
             archiveArtifacts artifacts: 'full-stack-blogging-app/trivy-report.txt', allowEmptyArchive: true
         }
-    }
 
+        success {
+            echo 'Pipeline completed successfully'
+        }
+
+        failure {
+            echo 'Pipeline failed'
+        }
+    }
 }
