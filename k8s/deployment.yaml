@@ -20,7 +20,7 @@ spec:
       containers:
       - name: twitter-app
 
-        image: naveen0922/twitter-app:23
+        image: naveen0922/twitter-app:25
 
         ports:
         - containerPort: 8080
